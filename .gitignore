@@ -1,2 +1,6 @@
 archive/
 prefab-research-352802-3773376dfad4.json
+__pycache__/
+later/
+uwsgi/
+app.sqlite
