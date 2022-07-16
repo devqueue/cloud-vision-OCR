@@ -4,3 +4,4 @@ __pycache__/
 later/
 uwsgi/
 app.sqlite
+google-cloud-sdk/

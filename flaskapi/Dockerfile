@@ -6,17 +6,13 @@ ENV PYTHONUNBUFFERED 1
 
 COPY ./requirements.txt /requirements.txt
 COPY . /app
-COPY ./scripts /scripts
-
 
 WORKDIR /app
 EXPOSE 8000
 
 RUN pip install -r /requirements.txt && \
-    chmod -R +x /scripts
+    export GOOGLE_APPLICATION_CREDENTIALS=prefab-research-352802-3773376dfad4.json
 
 ENV PATH="/scripts:$PATH"
 
-# CMD ["run.sh"]
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "wsgi:app"]

@@ -208,10 +208,10 @@ def main_api(): #current_user argument
         
         mappings = {
             'ID': id_number,
+            'date_of_birth':date_of_birth,
+            'expiry_date': expiry_date,
             'name_arabic':name_arabic,
             'name_english':name_english,
-            'expiry_date': expiry_date,
-            'date_of_birth':date_of_birth,
             'nationality':nationality,
         }
 
@@ -244,9 +244,11 @@ def main_api(): #current_user argument
 
         mappings = {
             'ID': id_number,
-            'name_arabic':name_arabic,
+            'date_of_birth':date_of_birth,
             'expiry_date': expiry_date,
-            'date_of_birth':date_of_birth
+            'name_arabic':name_arabic,
+            'name_english': 'work in progress',
+            'Nationality': 'Saudi',
         }
 
         return mappings
@@ -290,10 +292,13 @@ def main_api(): #current_user argument
     result = docai_client.process_document(request=grequest)
     document_object = result.document
     raw_text = document_object.text
-
     results = get_mapped_text(raw_text)
 
-    return jsonify({'OCR_Resut' : results})
+    return jsonify({
+        'OCR_Resut' : results,
+        'raw_results': raw_text
+        }
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
