@@ -8,7 +8,7 @@ COPY ./requirements.txt /requirements.txt
 COPY . /app
 
 WORKDIR /app
-EXPOSE 8000
+EXPOSE 8080
 
 RUN pip install -r /requirements.txt && \
     export GOOGLE_APPLICATION_CREDENTIALS=prefab-research-352802-3773376dfad4.json

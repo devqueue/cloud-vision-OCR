@@ -4,7 +4,7 @@ services:
   api:
     build: ./flaskapi
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ./flaskapi:/app
     environment:

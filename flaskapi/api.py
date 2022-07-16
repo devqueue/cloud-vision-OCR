@@ -1,3 +1,4 @@
+from unicodedata import name
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 import uuid
@@ -8,6 +9,8 @@ from functools import wraps
 import re
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
+from google.cloud import translate_v2 as translate
+import six
 import os
 
 app = Flask(__name__)
@@ -173,6 +176,18 @@ def login():
 # @token_required
 def main_api(): #current_user argument 
 
+    def translate(target, text):
+        translate_client = translate.Client()
+
+        if isinstance(text, six.binary_type):
+            text = text.decode("utf-8")
+
+        # Text can also be a sequence of strings, in which case this method
+        # will return a sequence of results for each text.
+        result = translate_client.translate(text, target_language=target)
+        translated = result["translatedText"]
+        return translated
+
     def process_iqama(raw_text):
         raw_text = raw_text.replace('\n', '  ')
         id_number = re.search(r"\d{10}", raw_text)
@@ -242,12 +257,17 @@ def main_api(): #current_user argument
         except Exception as e:
             print('Error', e)
 
+        name_english = ''
+        if name_arabic != None:
+            name_english = translate('en', name_arabic)
+        
+
         mappings = {
             'ID': id_number,
             'date_of_birth':date_of_birth,
             'expiry_date': expiry_date,
-            'name_arabic':name_arabic,
-            'name_english': 'work in progress',
+            'name_arabic': name_arabic,
+            'name_english': name_english,
             'Nationality': 'Saudi',
         }
 
