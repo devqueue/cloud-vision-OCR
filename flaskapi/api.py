@@ -9,9 +9,13 @@ from functools import wraps
 import re
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
-from google.cloud import translate_v2 as translate
+from googletrans import Translator
 import six
 import os
+import base64
+import io
+import requests
+
 
 app = Flask(__name__)
 
@@ -176,7 +180,7 @@ def login():
 # @token_required
 def main_api(): #current_user argument 
 
-    def translate(target, text):
+    def translate_text(target, text):
         translate_client = translate.Client()
 
         if isinstance(text, six.binary_type):
@@ -200,6 +204,8 @@ def main_api(): #current_user argument
         try:
             name_both = name_both.group(0)
             name_english = re.sub(r'[^a-zA-Z ]+','', name_both).strip()
+            name_english = name_english.replace('KINGDOM OF SAUDI ARABIA', '')
+            name_english = name_english.replace('MINISTRY OF INTERIOR', '')
             name_arabic = re.sub(r'[a-zA-Z?]','', name_both).strip()
         except Exception as e:
             print('Error', e)
@@ -220,23 +226,27 @@ def main_api(): #current_user argument
         except Exception as e:
             print('Error', e)
 
+        if name_english != None:
+            name_arabic = translate_text('ar', name_english)
         
         mappings = {
             'ID': id_number,
             'date_of_birth':date_of_birth,
             'expiry_date': expiry_date,
-            'name_arabic':name_arabic,
-            'name_english':name_english,
-            'nationality':nationality,
+            'name_arabic': name_arabic,
+            'name_english': name_english,
+            'nationality': nationality,
         }
 
         return mappings
 
 
     def process_nationalID(raw_text):
+        # wazara = ''وزارة الداخلية
+        # raqm = ''الرقم
         raw_text.replace('\n', ' ')
         id_number = re.search(r'\d{10}', raw_text)
-        name_arabic = re.search(r'(?<=الرقم)(.*)(?=وزارة الداخلية)', raw_text)
+        name_arabic = re.search(r'(?<=وزارةالداخلية)(.*)(?=الرقم)', raw_text)
         expiry_date = re.search(r'(?<=الانتهاء)(.*)(?=هـ)', raw_text)
         date_of_birth = re.search(r'(?<=تاريخ الميلاد)(.*)(?=هـ)', raw_text)
 
@@ -259,7 +269,7 @@ def main_api(): #current_user argument
 
         name_english = ''
         if name_arabic != None:
-            name_english = translate('en', name_arabic)
+            name_english = translate_text('en', name_arabic)
         
 
         mappings = {
@@ -317,6 +327,66 @@ def main_api(): #current_user argument
     return jsonify({
         'OCR_Resut' : results,
         'raw_results': raw_text
+        }
+    )
+
+
+@app.route('/nanotechapi', methods=['POST'])
+def nanotech_api():
+    translator = Translator()
+
+    def extract_from_json(response):
+        from collections import defaultdict
+
+        if response['message'] == 'Success':
+            predictions = response['result'][0]['prediction']
+            preds = []
+            final_dict = defaultdict(list)
+
+            for i in predictions:
+                dictionary = {
+                    i['label']:i['ocr_text'],
+                }
+                preds.append(dictionary)
+
+            for i in preds:
+                for key, value in i.items():
+                    final_dict[key].append(value)
+
+            final_dict = dict(final_dict)
+            final_dict = {k:' '.join(v) for k,v in final_dict.items()}
+        
+        return final_dict
+
+
+    url = 'https://app.nanonets.com/api/v2/OCR/Model/b390edde-66bf-4a6c-9c02-e9f3b868d973/LabelUrls/?async=false'
+    auth_key = 'rDI3qWcKq0jSAMPw13yhOy8Ekk-wp1e1'
+    headers = {
+        'accept': 'application/x-www-form-urlencoded'
+    }
+
+    data = request.get_json()
+    image_content = data['image']
+    f = io.BytesIO()
+    f.write(base64.b64decode(image_content))
+    f.seek(0)
+
+    data = {
+        'file': f
+    }
+
+    response = requests.request('POST', 
+                            url,
+                            headers=headers,
+                            auth=requests.auth.HTTPBasicAuth(auth_key, ''),
+                            files=data)
+    resp = response.json()
+
+    results = extract_from_json(resp)
+    results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
+
+    return jsonify({
+        'OCR_Resut' : results,
         }
     )
 
