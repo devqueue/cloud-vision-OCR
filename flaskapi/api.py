@@ -1,4 +1,3 @@
-from unicodedata import name
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 import uuid
@@ -9,7 +8,9 @@ from functools import wraps
 import re
 from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
+from google.cloud import translate_v2 as translate # not useful
 from googletrans import Translator
+from hijri_converter import Hijri, Gregorian
 import six
 import os
 import base64
@@ -384,6 +385,10 @@ def nanotech_api():
 
     results = extract_from_json(resp)
     results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
+    results['ID'] = results['ID'].split()[-1]
+    date = results['Date_of_issue'].split('/')
+    if len(date) == 3:
+        results['Date_of_issue'] = Hijri(date[0], date[1], date[2]).to_gregorian()
 
     return jsonify({
         'OCR_Resut' : results,
