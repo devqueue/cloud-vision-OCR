@@ -386,12 +386,12 @@ def nanotech_api():
     results = extract_from_json(resp)
     results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
     results['ID'] = results['ID'].split()[-1]
-    date = results['Date_of_issue'].split('/')
-    if len(date) == 3:
-        results['Date_of_issue'] = Hijri(date[0], date[1], date[2]).to_gregorian()
-    
-    print(results)
+    date = [int(i) for i in results['Date_of_issue'].split('/')]
 
+    if len(date) == 3:
+        greg = str(Hijri(date[0], date[1], date[2]).to_gregorian())
+        results['Date_of_issue'] = '/'.join(greg.split('-'))
+    
     return jsonify({
         'OCR_Resut' : results,
         }
