@@ -389,6 +389,8 @@ def nanotech_api():
     date = results['Date_of_issue'].split('/')
     if len(date) == 3:
         results['Date_of_issue'] = Hijri(date[0], date[1], date[2]).to_gregorian()
+    
+    print(results)
 
     return jsonify({
         'OCR_Resut' : results,
