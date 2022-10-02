@@ -387,9 +387,8 @@ def nanotech_api():
     results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
     results['ID'] = results['ID'].split()[-1]
     date = [int(i) for i in results['Date_of_issue'].split('/')]
-    results['not_exec'] = 30
+
     if len(date) == 3:
-        results['I_was_exec'] = '20'
         greg = str(Hijri(date[0], date[1], date[2]).to_gregorian())
         results['Date_of_issue'] = '/'.join(greg.split('-'))
     
