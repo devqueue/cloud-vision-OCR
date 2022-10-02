@@ -10,13 +10,13 @@ from google.api_core.client_options import ClientOptions
 from google.cloud import documentai_v1 as documentai
 from google.cloud import translate_v2 as translate # not useful
 from googletrans import Translator
-from hijri_converter import Hijri, Gregorian
+from hijri_converter import Hijri
 import six
 import os
 import base64
 import io
 import requests
-
+import datetime
 
 app = Flask(__name__)
 
@@ -387,10 +387,16 @@ def nanotech_api():
     results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
     results['ID'] = results['ID'].split()[-1]
     date = [int(i) for i in results['Date_of_issue'].split('/')]
-
+    results['Expiry_date'] = ''
+    
     if len(date) == 3:
         greg = str(Hijri(date[0], date[1], date[2]).to_gregorian())
         results['Date_of_issue'] = '/'.join(greg.split('-'))
+
+        issue = results['Date_of_issue'].split('/')
+        year = datetime.datetime.now().year + 1
+        expiry_date = f'{year}/{issue[1]}/{issue[2]}'
+        results['Expiry_date'] = expiry_date
     
     return jsonify({
         'OCR_Resut' : results,
