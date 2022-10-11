@@ -384,6 +384,7 @@ def nanotech_api():
     resp = response.json()
 
     results = extract_from_json(resp)
+
     results['Name_arabic'] = translator.translate(results['Name'], dest='ar').text
     results['ID'] = results['ID'].split()[-1]
     date = [int(i) for i in results['Date_of_issue'].split('/')]
@@ -397,6 +398,34 @@ def nanotech_api():
         year = datetime.datetime.now().year + 1
         expiry_date = f'{year}/{issue[1]}/{issue[2]}'
         results['Expiry_date'] = expiry_date
+
+    # name manipulation
+    new_name = results['Name'].split()
+    name_length = len(new_name)
+
+    if name_length == 4:
+        first_name = new_name[0] + ' ' + new_name[1] 
+        middle_name = new_name[2]
+        last_name = new_name[3]
+    elif name_length == 3:
+        first_name = new_name[0]
+        middle_name = new_name[1]
+        last_name = new_name[2]
+    elif name_length == 2:
+        first_name = new_name[0]
+        middle_name = ''
+        last_name = new_name[1]
+    elif name_length == 1:
+        first_name = new_name[0]
+    else:
+        first_name = results['Name']
+        middle_name = ''
+        last_name = ''
+
+    results['First_name'] = first_name
+    results['Middle_name'] = middle_name
+    results['Last_name'] = last_name
+
     
     return jsonify({
         'OCR_Resut' : results,
